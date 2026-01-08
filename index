@@ -6,7 +6,7 @@
   <title>MAPSEM – SVG</title>
 </head>
 <body>
-  <h1>MAPSEM – MO_RELAZIONI_1</h1>
-  <object data="svg/MO_RELAZIONI_1.svg" type="image/svg+xml" style="width:100%;height:90vh;"></object>
+  <h1>MAPSEM – MO_RELAZIONI_1_responsive</h1>
+  <object data="svg/MO_RELAZIONI_1_responsive.svg" type="image/svg+xml" style="width:100%;height:90vh;"></object>
 </body>
 </html>
