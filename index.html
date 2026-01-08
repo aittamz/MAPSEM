@@ -1,71 +1,188 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MAPSEM – Home</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>MAPSEM – Materiali e Data Visualization</title>
+
+  <!-- Anti-cache (utile su GitHub Pages) -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 980px; margin: 2rem auto; padding: 0 1rem; }
-    h1 { margin-bottom: .25rem; }
-    p { color: #444; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-top: 1.25rem; }
-    .card { border: 1px solid #e5e5e5; border-radius: 12px; padding: 1rem; }
-    .card h2 { font-size: 1.05rem; margin: 0 0 .5rem 0; }
-    .meta { font-size: .9rem; color: #666; margin: 0 0 .75rem 0; }
-    a.btn { display: inline-block; padding: .5rem .75rem; border: 1px solid #ddd; border-radius: 10px; text-decoration: none; }
-    a.btn:hover { border-color: #bbb; }
-    .thumb { margin-top: .75rem; border: 1px solid #eee; border-radius: 10px; overflow: hidden; background: #fafafa; }
-    .thumb img { width: 100%; height: auto; display: block; }
-    code { background: #f6f6f6; padding: .15rem .35rem; border-radius: 6px; }
+    :root {
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #2563eb;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 3rem;
+    }
+
+    h1 {
+      margin-bottom: .25rem;
+      font-size: 2rem;
+    }
+
+    p.lead {
+      color: var(--muted);
+      max-width: 720px;
+      margin-bottom: 2rem;
+    }
+
+    h2 {
+      margin-top: 2.5rem;
+      font-size: 1.3rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: .4rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.25rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .meta {
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    a.button {
+      align-self: flex-start;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: .45rem .9rem;
+      border-radius: 999px;
+      font-size: .85rem;
+      color: var(--text);
+      background: #fff;
+    }
+
+    a.button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .thumb {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #f3f4f6;
+    }
+
+    .thumb img {
+      width: 100%;
+      display: block;
+    }
+
+    footer {
+      margin-top: 3rem;
+      font-size: .85rem;
+      color: var(--muted);
+    }
   </style>
 </head>
+
 <body>
+<div class="container">
 
-<h1>MAPSEM – Materiali</h1>
-<p>Indice dei file pubblicati su GitHub Pages (root del repository). Tutti i link aprono in una nuova scheda.</p>
+  <h1>MAPSEM</h1>
+  <p class="lead">
+    Materiali di ricerca e visualizzazioni del progetto MAPSEM.
+    Tutti i file sono pubblicati direttamente dal branch <strong>main</strong>
+    tramite GitHub Pages.
+  </p>
 
-<div class="grid">
+  <!-- ===================== -->
+  <!-- VISUALIZZAZIONI HTML -->
+  <!-- ===================== -->
+  <h2>Visualizzazioni interattive</h2>
 
-  <div class="card">
-    <h2>Generi (normalized)</h2>
-    <p class="meta"><code>MAPSEM_GENERI_NORMALIZED.html</code></p>
-    <a class="btn" href="MAPSEM_GENERI_NORMALIZED.html" target="_blank" rel="noopener">Apri</a>
-  </div>
+  <div class="grid">
+    <div class="card">
+      <h3>Generi normalizzati</h3>
+      <p class="meta">MAPSEM_GENERI_NORMALIZED.html</p>
+      <a class="button" href="MAPSEM_GENERI_NORMALIZED.html" target="_blank">Apri</a>
+    </div>
 
-  <div class="card">
-    <h2>Rete relazionale (SVG responsive)</h2>
-    <p class="meta"><code>MO_RELAZIONI_1_responsive.svg</code></p>
-    <a class="btn" href="MO_RELAZIONI_1_responsive.svg" target="_blank" rel="noopener">Apri</a>
-  </div>
+    <div class="card">
+      <h3>Mappa editori geocodificata</h3>
+      <p class="meta">editors_map_geocoded_OOK.html</p>
+      <a class="button" href="editors_map_geocoded_OOK.html" target="_blank">Apri</a>
+    </div>
 
-  <div class="card">
-    <h2>Mappa editori geocodificata</h2>
-    <p class="meta"><code>editors_map_geocoded_OOK.html</code></p>
-    <a class="btn" href="editors_map_geocoded_OOK.html" target="_blank" rel="noopener">Apri</a>
-  </div>
-
-  <div class="card">
-    <h2>Timeline film</h2>
-    <p class="meta"><code>timeline_film_FINALE_Ufficiale.html</code></p>
-    <a class="btn" href="timeline_film_FINALE_Ufficiale.html" target="_blank" rel="noopener">Apri</a>
-  </div>
-
-  <div class="card">
-    <h2>Sankey principale (PNG)</h2>
-    <p class="meta"><code>sankey_principale_v2.png</code></p>
-    <a class="btn" href="sankey_principale_v2.png" target="_blank" rel="noopener">Apri</a>
-    <div class="thumb">
-      <img src="sankey_principale_v2.png" alt="Anteprima Sankey">
+    <div class="card">
+      <h3>Timeline film</h3>
+      <p class="meta">timeline_film_FINALE_Ufficiale.html</p>
+      <a class="button" href="timeline_film_FINALE_Ufficiale.html" target="_blank">Apri</a>
     </div>
   </div>
 
-  <div class="card">
-    <h2>README (GitHub)</h2>
-    <p class="meta"><code>README.md</code></p>
-    <a class="btn" href="README.md" target="_blank" rel="noopener">Apri</a>
+  <!-- ========== -->
+  <!-- RETI SVG -->
+  <!-- ========== -->
+  <h2>Reti e grafi</h2>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Rete relazionale (responsive)</h3>
+      <p class="meta">MO_RELAZIONI_1_responsive.svg</p>
+      <a class="button" href="MO_RELAZIONI_1_responsive.svg" target="_blank">Apri SVG</a>
+    </div>
   </div>
 
-</div>
+  <!-- ========= -->
+  <!-- IMMAGINI -->
+  <!-- ========= -->
+  <h2>Immagini</h2>
 
+  <div class="grid">
+    <div class="card">
+      <h3>Sankey principale</h3>
+      <p class="meta">sankey_principale_v2.png</p>
+      <a class="button" href="sankey_principale_v2.png" target="_blank">Apri</a>
+      <div class="thumb">
+        <img src="sankey_principale_v2.png" alt="Sankey principale">
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    MAPSEM · GitHub Pages · aggiornato automaticamente dal branch <code>main</code>
+  </footer>
+
+</div>
 </body>
 </html>
