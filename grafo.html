@@ -135,9 +135,10 @@
 
         const prevScale = scale;
         const delta = -e.deltaY;
-        const zoomFactor = delta > 0 ? 1.12 : 1/1.12;
+        const STEP = 1.06; 
+        const zoomFactor = delta > 0 ? 1.03 : 1/1.06;
 
-        scale = clamp(scale * zoomFactor, 0.15, 12);
+        scale = clamp(scale * zoomFactor, 0.05, 60);
 
         // compensazione pan per zoom centrato sul cursore
         panX = cx - (cx - panX) * (scale / prevScale);
