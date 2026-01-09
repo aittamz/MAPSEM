@@ -5,23 +5,59 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Rete Relazionale – MAPSEM</title>
   <style>
-    :root { color-scheme: light dark; }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    :root{
+      color-scheme: light dark;
+
+      /* UI palette (forzata chiara e leggibile) */
+      --ui-bg: #ffffff;
+      --ui-border: #e5e7eb;
+      --ui-text: #111827;
+      --ui-text-muted: #6b7280;
+      --ui-hover: rgba(0,0,0,.04);
+      --ui-active: rgba(0,0,0,.06);
+    }
+
+    body{
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--ui-bg);
+      color: var(--ui-text);
+    }
 
     header{
-      position: sticky; top: 0; z-index: 10;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+
       backdrop-filter: blur(8px);
-      background: color-mix(in srgb, Canvas 85%, transparent);
-      border-bottom: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
+      background: var(--ui-bg);
+      border-bottom: 1px solid var(--ui-border);
+
       padding: 10px 12px;
-      display: flex; gap: 8px; align-items: center;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+
+      color: var(--ui-text);
     }
-    header a, header button{
-      border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
-      background: color-mix(in srgb, Canvas 92%, transparent);
-      padding: 6px 10px; border-radius: 10px;
-      color: inherit; text-decoration: none; cursor: pointer;
+
+    header a,
+    header button{
+      border: 1px solid var(--ui-border);
+      background: var(--ui-bg);
+
+      padding: 6px 10px;
+      border-radius: 10px;
+
+      color: var(--ui-text);
+      text-decoration: none;
+      cursor: pointer;
       font-size: 14px;
+    }
+
+    header a:hover,
+    header button:hover{
+      background: var(--ui-hover);
     }
 
     #wrap{
@@ -29,7 +65,7 @@
       width: 100%;
       overflow: hidden;
       touch-action: none;
-      background: #ffffff;
+      background: var(--ui-bg);
 
       user-select: none;
       -webkit-user-select: none;
@@ -41,20 +77,20 @@
       width: 100%;
       height: 100%;
       display: block;
-      background: #ffffff;
+      background: var(--ui-bg);
     }
 
-    .hint{ margin-left: auto; opacity: .75; font-size: 13px; }
+    .hint{ margin-left: auto; opacity: .75; font-size: 13px; color: var(--ui-text-muted); }
 
-    /* --- LEGENDA (cliccabile) --- */
+    /* --- LEGENDA (cliccabile: evidenzia SOLO GLI ARCHI del colore scelto) --- */
     .legend{
       position: fixed;
       right: 1rem;
       bottom: 1rem;
       z-index: 9999;
 
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
+      background: var(--ui-bg);
+      border: 1px solid var(--ui-border);
       border-radius: 14px;
       padding: 10px 12px;
 
@@ -62,54 +98,70 @@
       font-size: 14px;
       line-height: 1.35;
       min-width: 210px;
+
+      color: var(--ui-text);
     }
+
+    /* forza colore testo su TUTTI gli elementi della legenda */
+    .legend, .legend *{ color: var(--ui-text); }
+
     .legend-title{
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+
       font-weight: 650;
       margin-bottom: 8px;
     }
-    .legend small{ font-weight: 500; opacity: .7; }
+    .legend-title small{
+      color: var(--ui-text-muted);
+      font-weight: 500;
+    }
 
     .legend-item{
       display: flex;
       align-items: center;
       gap: 10px;
+
       margin-top: 6px;
       padding: 6px 8px;
       border-radius: 10px;
+
       cursor: pointer;
       border: 1px solid transparent;
     }
-    .legend-item:hover{
-      background: rgba(0,0,0,.04);
-    }
+    .legend-item:hover{ background: var(--ui-hover); }
     .legend-item.active{
-      border-color: rgba(0,0,0,.14);
-      background: rgba(0,0,0,.05);
+      border-color: var(--ui-border);
+      background: var(--ui-active);
     }
+
     .legend-color{
       width: 18px;
       height: 18px;
       border-radius: 4px;
       flex-shrink: 0;
     }
+
     .legend-actions{
       margin-top: 10px;
       display: flex;
       gap: 8px;
       justify-content: flex-end;
     }
+
     .legend-actions button{
-      border: 1px solid #e5e7eb;
-      background: #ffffff;
+      border: 1px solid var(--ui-border);
+      background: var(--ui-bg);
       padding: 6px 10px;
       border-radius: 10px;
+
       cursor: pointer;
       font-size: 13px;
+      color: var(--ui-text);
     }
+    .legend-actions button:hover{ background: var(--ui-hover); }
   </style>
 </head>
 
@@ -239,7 +291,6 @@
     }
 
     function edgeStrokeColor(edgeG){
-      // In SVG Gephi, l'arco è spesso in g.edge -> path con stroke
       const path = edgeG.querySelector("path, line, polyline");
       if (!path) return "";
 
@@ -251,7 +302,6 @@
     }
 
     function showAll(svg){
-      // ripristina opacità su archi e nodi
       svg.querySelectorAll("g.edge, g.node").forEach(g => g.style.opacity = "");
     }
 
@@ -261,16 +311,14 @@
       const edges = Array.from(svg.querySelectorAll("g.edge"));
       const nodes = Array.from(svg.querySelectorAll("g.node"));
 
-      // fade nodi (li lasciamo visibili ma discreti)
+      // nodi sempre visibili ma discreti
       nodes.forEach(n => n.style.opacity = "0.18");
 
-      // fade archi, poi evidenzia solo quelli target
+      // archi in fade, poi evidenzia solo quelli target
       edges.forEach(e => e.style.opacity = "0.04");
 
       for (const e of edges) {
-        if (edgeStrokeColor(e) === target) {
-          e.style.opacity = "1";
-        }
+        if (edgeStrokeColor(e) === target) e.style.opacity = "1";
       }
     }
 
@@ -392,7 +440,7 @@
         item.addEventListener("click", () => {
           const color = item.getAttribute("data-color");
 
-          // toggle: se clicchi lo stesso ruolo -> mostra tutto
+          // toggle: stesso ruolo -> mostra tutto
           const isActive = item.classList.contains("active");
           if (isActive) {
             setActive(null);
