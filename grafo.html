@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Relazioni MAPSEM</title>
+  <title>Rete relazionale MAPSEM</title>
   <style>
     :root { color-scheme: light dark; }
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
@@ -27,15 +27,14 @@
       width: 100%;
       overflow: hidden;
       touch-action: none; /* importante per pan su touch */
-      background: Canvas;
-
-      user-select: none;
-      -webkit-user-select: none;
-      cursor: grab;
+      background: #ffffff; /* SFONDO BIANCO */
     }
-    #wrap:active { cursor: grabbing; }
-
-    #wrap svg { width: 100%; height: 100%; display: block; }
+    #wrap svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #ffffff; /* assicura bianco anche dentro lo svg */
+    }
     .hint { margin-left: auto; opacity: .75; font-size: 13px; }
   </style>
 </head>
@@ -43,13 +42,14 @@
   <header>
     <a href="index.html">← Indice</a>
     <button id="reset">Reset</button>
-    <span class="hint">Drag = sposta · Rotella/trackpad = zoom (Shift = turbo)</span>
+    <span class="hint">Drag = sposta · Rotella/trackpad = zoom</span>
   </header>
 
   <div id="wrap" aria-label="SVG viewer"></div>
 
   <script>
-    const SVG_FILE = "MO_RELAZIONI_1.svg";
+    // 1) Cambia qui il nome del tuo file SVG:
+    const SVG_FILE = "MO_RELAZIONI_1_responsive.svg";
 
     const wrap = document.getElementById("wrap");
     const resetBtn = document.getElementById("reset");
@@ -59,12 +59,9 @@
     let panX = 0;
     let panY = 0;
 
-    // Stato PAN
     let isPanning = false;
-    let dragged = false;
-    let lastX = 0, lastY = 0;
-    let vx = 0, vy = 0;
-    let inertiaRaf = null;
+    let startX = 0;
+    let startY = 0;
 
     function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
@@ -73,6 +70,7 @@
     }
 
     function fitToView(svg, viewportG){
+      // prova a "fit" basandosi sul viewBox esistente; se manca, lo creiamo con getBBox
       if (!svg.getAttribute("viewBox")) {
         const bb = viewportG.getBBox();
         svg.setAttribute("viewBox", `${bb.x} ${bb.y} ${bb.width} ${bb.height}`);
@@ -83,41 +81,85 @@
       applyTransform(viewportG);
     }
 
-    function stopInertia(){
-      if (inertiaRaf) cancelAnimationFrame(inertiaRaf);
-      inertiaRaf = null;
-    }
-
-    function startInertia(viewportG){
-      stopInertia();
-      const step = () => {
-        vx *= 0.92;  // attrito
-        vy *= 0.92;
-
-        panX += vx;
-        panY += vy;
-        applyTransform(viewportG);
-
-        if (Math.abs(vx) + Math.abs(vy) > 0.35) {
-          inertiaRaf = requestAnimationFrame(step);
-        } else {
-          stopInertia();
-        }
-      };
-      inertiaRaf = requestAnimationFrame(step);
-    }
-
     async function loadSvg(){
       const res = await fetch(SVG_FILE, { cache: "no-store" });
       const text = await res.text();
 
+      // Inseriamo lo SVG inline nel DOM
       wrap.innerHTML = text;
 
       const svg = wrap.querySelector("svg");
       if (!svg) throw new Error("SVG non trovato nel file.");
 
+      // Responsive: assicura che non abbia width/height “rigidi”
       svg.removeAttribute("width");
       svg.removeAttribute("height");
       svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
-      let viewportG = svg.querySe
+      // Creiamo un <g id="viewport"> che conterrà TUTTO e che verrà trasformato
+      // Se già esiste (alcuni export lo fanno), lo riusiamo.
+      let viewportG = svg.querySelector("#viewport");
+      if (!viewportG) {
+        viewportG = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        viewportG.setAttribute("id", "viewport");
+
+        // sposta tutti i figli attuali dentro viewportG
+        while (svg.firstChild) viewportG.appendChild(svg.firstChild);
+        svg.appendChild(viewportG);
+      }
+
+      // Fit iniziale
+      fitToView(svg, viewportG);
+
+      // Gestione PAN (drag)
+      wrap.addEventListener("pointerdown", (e) => {
+        isPanning = true;
+        wrap.setPointerCapture(e.pointerId);
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+      });
+
+      wrap.addEventListener("pointermove", (e) => {
+        if (!isPanning) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        applyTransform(viewportG);
+      });
+
+      wrap.addEventListener("pointerup", () => { isPanning = false; });
+      wrap.addEventListener("pointercancel", () => { isPanning = false; });
+
+      // Gestione ZOOM (wheel)
+      wrap.addEventListener("wheel", (e) => {
+        e.preventDefault();
+
+        // zoom verso il punto del cursore
+        const rect = wrap.getBoundingClientRect();
+        const cx = e.clientX - rect.left;
+        const cy = e.clientY - rect.top;
+
+        const prevScale = scale;
+        const delta = -e.deltaY;
+        const base = e.shiftKey ? 1.18 : 1.06; // Shift = turbo
+        const zoomFactor = delta > 0 ? base : 1/base;
+
+        scale = clamp(scale * zoomFactor, 0.05, 60);
+
+        // compensazione pan per zoom centrato sul cursore
+        panX = cx - (cx - panX) * (scale / prevScale);
+        panY = cy - (cy - panY) * (scale / prevScale);
+
+        applyTransform(viewportG);
+      }, { passive: false });
+
+      // Reset
+      resetBtn.addEventListener("click", () => fitToView(svg, viewportG));
+    }
+
+    loadSvg().catch(err => {
+      wrap.innerHTML = `<p style="padding:12px">Errore: ${err.message}</p>`;
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
