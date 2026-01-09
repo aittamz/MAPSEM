@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rete relazionale - MAPSEM</title>
+  <title>Rete Relazionale – MAPSEM</title>
   <style>
     :root { color-scheme: light dark; }
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
@@ -45,6 +45,71 @@
     }
 
     .hint{ margin-left: auto; opacity: .75; font-size: 13px; }
+
+    /* --- LEGENDA (cliccabile) --- */
+    .legend{
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      z-index: 9999;
+
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 10px 12px;
+
+      box-shadow: 0 6px 16px rgba(0,0,0,.10);
+      font-size: 14px;
+      line-height: 1.35;
+      min-width: 210px;
+    }
+    .legend-title{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 650;
+      margin-bottom: 8px;
+    }
+    .legend small{ font-weight: 500; opacity: .7; }
+
+    .legend-item{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .legend-item:hover{
+      background: rgba(0,0,0,.04);
+    }
+    .legend-item.active{
+      border-color: rgba(0,0,0,.14);
+      background: rgba(0,0,0,.05);
+    }
+    .legend-color{
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .legend-actions{
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .legend-actions button{
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      padding: 6px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
   </style>
 </head>
 
@@ -56,6 +121,46 @@
   </header>
 
   <div id="wrap" aria-label="SVG viewer"></div>
+
+  <!-- LEGENDA (cliccabile: evidenzia SOLO GLI ARCHI del colore scelto) -->
+  <div class="legend" id="legend">
+    <div class="legend-title">
+      <span>Legenda</span>
+      <small>clicca un ruolo</small>
+    </div>
+
+    <div class="legend-item" data-role="compositore" data-color="#e6a6ff">
+      <span class="legend-color" style="background:#e6a6ff"></span><span>compositore</span>
+    </div>
+    <div class="legend-item" data-role="editore" data-color="#7fd300">
+      <span class="legend-color" style="background:#7fd300"></span><span>editore</span>
+    </div>
+    <div class="legend-item" data-role="paroliere" data-color="#00c4ff">
+      <span class="legend-color" style="background:#00c4ff"></span><span>paroliere</span>
+    </div>
+    <div class="legend-item" data-role="esecutore" data-color="#4f4a45">
+      <span class="legend-color" style="background:#4f4a45"></span><span>esecutore</span>
+    </div>
+    <div class="legend-item" data-role="traduttore" data-color="#ff8a00">
+      <span class="legend-color" style="background:#ff8a00"></span><span>traduttore</span>
+    </div>
+    <div class="legend-item" data-role="arrangiatore" data-color="#ff4f87">
+      <span class="legend-color" style="background:#ff4f87"></span><span>arrangiatore</span>
+    </div>
+    <div class="legend-item" data-role="dedicatario" data-color="#00c389">
+      <span class="legend-color" style="background:#00c389"></span><span>dedicatario</span>
+    </div>
+    <div class="legend-item" data-role="direttore_orchestra" data-color="#d7b8b2">
+      <span class="legend-color" style="background:#d7b8b2"></span><span>direttore_orchestra</span>
+    </div>
+    <div class="legend-item" data-role="riduttore" data-color="#c9c9c9">
+      <span class="legend-color" style="background:#c9c9c9"></span><span>riduttore</span>
+    </div>
+
+    <div class="legend-actions">
+      <button id="legend-showall" type="button">Mostra tutto</button>
+    </div>
+  </div>
 
   <script>
     const SVG_FILE = "mattia_test_2.svg";
@@ -78,7 +183,6 @@
     function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
     function applyTransform(viewportG){
-      // translate THEN scale è ok: pan in "screen pixels", molto naturale
       viewportG.setAttribute("transform", `translate(${panX} ${panY}) scale(${scale})`);
     }
 
@@ -99,7 +203,6 @@
     function startInertia(viewportG){
       stopInertia();
       const step = () => {
-        // attrito: più alto = più smooth e si ferma prima
         vx *= 0.90;
         vy *= 0.90;
 
@@ -115,6 +218,60 @@
         }
       };
       inertiaRaf = requestAnimationFrame(step);
+    }
+
+    // ---- Filtro archi per colore (Gephi-friendly) ----
+    function hexToRgbString(hex){
+      const h = hex.replace("#","").trim();
+      const full = h.length === 3 ? h.split("").map(c => c+c).join("") : h;
+      const n = parseInt(full, 16);
+      const r = (n >> 16) & 255;
+      const g = (n >> 8) & 255;
+      const b = n & 255;
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function normalizeRgb(str){
+      const s = String(str || "").trim().toLowerCase();
+      const m = s.match(/rgb\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*\)/i);
+      if (m) return `rgb(${+m[1]}, ${+m[2]}, ${+m[3]})`;
+      return s;
+    }
+
+    function edgeStrokeColor(edgeG){
+      // In SVG Gephi, l'arco è spesso in g.edge -> path con stroke
+      const path = edgeG.querySelector("path, line, polyline");
+      if (!path) return "";
+
+      const attr = path.getAttribute("stroke");
+      if (attr && attr !== "none") return normalizeRgb(attr);
+
+      const cs = getComputedStyle(path).stroke;
+      return normalizeRgb(cs);
+    }
+
+    function showAll(svg){
+      // ripristina opacità su archi e nodi
+      svg.querySelectorAll("g.edge, g.node").forEach(g => g.style.opacity = "");
+    }
+
+    function filterEdgesByColor(svg, hexColor){
+      const target = normalizeRgb(hexToRgbString(hexColor));
+
+      const edges = Array.from(svg.querySelectorAll("g.edge"));
+      const nodes = Array.from(svg.querySelectorAll("g.node"));
+
+      // fade nodi (li lasciamo visibili ma discreti)
+      nodes.forEach(n => n.style.opacity = "0.18");
+
+      // fade archi, poi evidenzia solo quelli target
+      edges.forEach(e => e.style.opacity = "0.04");
+
+      for (const e of edges) {
+        if (edgeStrokeColor(e) === target) {
+          e.style.opacity = "1";
+        }
+      }
     }
 
     async function loadSvg(){
@@ -162,15 +319,11 @@
         const dx = e.clientX - lastX;
         const dy = e.clientY - lastY;
 
-        // soglia per evitare click involontari
         if (!dragged && Math.hypot(dx, dy) > 2) dragged = true;
 
-        // aggiornamento pan (molto diretto e fluido)
         panX += dx;
         panY += dy;
 
-        // velocità per inerzia (smoothed)
-        // media mobile semplice per evitare "saltelli"
         vx = vx * 0.6 + dx * 0.4;
         vy = vy * 0.6 + dy * 0.4;
 
@@ -192,7 +345,7 @@
         stopInertia();
       });
 
-      // blocca click "fantasma" dopo drag
+      // blocca click fantasma dopo drag
       wrap.addEventListener("click", (e) => {
         if (dragged) {
           e.preventDefault();
@@ -217,7 +370,6 @@
 
         scale = clamp(scale * zoomFactor, 0.05, 60);
 
-        // zoom centrato sul cursore
         panX = cx - (cx - panX) * (scale / prevScale);
         panY = cy - (cy - panY) * (scale / prevScale);
 
@@ -226,6 +378,37 @@
 
       // Reset
       resetBtn.addEventListener("click", () => fitToView(svg, viewportG));
+
+      // ---------- LEGENDA CLICK (FILTER EDGES ONLY) ----------
+      const legendItems = Array.from(document.querySelectorAll(".legend-item"));
+      const showAllBtn = document.getElementById("legend-showall");
+
+      function setActive(item){
+        legendItems.forEach(x => x.classList.remove("active"));
+        if (item) item.classList.add("active");
+      }
+
+      legendItems.forEach(item => {
+        item.addEventListener("click", () => {
+          const color = item.getAttribute("data-color");
+
+          // toggle: se clicchi lo stesso ruolo -> mostra tutto
+          const isActive = item.classList.contains("active");
+          if (isActive) {
+            setActive(null);
+            showAll(svg);
+            return;
+          }
+
+          setActive(item);
+          filterEdgesByColor(svg, color);
+        });
+      });
+
+      showAllBtn.addEventListener("click", () => {
+        setActive(null);
+        showAll(svg);
+      });
     }
 
     loadSvg().catch(err => {
