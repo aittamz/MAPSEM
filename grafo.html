@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rete Relazionale – MAPSEM</title>
+  <title>Rete Relazionakle – MAPSEM</title>
   <style>
     :root{
       color-scheme: light dark;
@@ -47,7 +47,6 @@
       cursor: pointer;
       font-size: 14px;
     }
-
     header a:hover,
     header button:hover{ background: var(--ui-hover); }
 
@@ -129,6 +128,7 @@
       height: 18px;
       border-radius: 4px;
       flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,.12);
     }
 
     .legend-actions{
@@ -160,13 +160,13 @@
 
   <div id="wrap" aria-label="SVG viewer"></div>
 
+  <!-- Legenda: colori "umani" (li possiamo lasciare come li vuoi tu) -->
   <div class="legend" id="legend">
     <div class="legend-title">
       <span>Legenda</span>
       <small>clicca un ruolo</small>
     </div>
 
-    <!-- colori come la tua legenda -->
     <div class="legend-item" data-color="#e6a6ff"><span class="legend-color" style="background:#e6a6ff"></span><span>compositore</span></div>
     <div class="legend-item" data-color="#7fd300"><span class="legend-color" style="background:#7fd300"></span><span>editore</span></div>
     <div class="legend-item" data-color="#00c4ff"><span class="legend-color" style="background:#00c4ff"></span><span>paroliere</span></div>
@@ -184,11 +184,13 @@
 
   <script>
     const SVG_FILE = "mattia_test_2.svg";
-
     const wrap = document.getElementById("wrap");
     const resetBtn = document.getElementById("reset");
 
     let svgRef = null;
+
+    // colori reali trovati sugli edges (Gephi)
+    let EDGE_COLOR_PALETTE = [];
 
     // Camera
     let scale = 1, panX = 0, panY = 0;
@@ -228,30 +230,15 @@
       inertiaRaf = requestAnimationFrame(step);
     }
 
-    // ---------- FILTER (edges by stroke color) ----------
-    function normalizeColor(str){
-      return String(str || "").toLowerCase().replace(/\s+/g, "");
-    }
-
-    function cssColorToRgbNormalized(colorStr){
-      // Converte qualunque colore CSS (hex/rgb/nome) in "rgb(r,g,b)" normalizzato
-      const el = document.createElement("span");
-      el.style.color = colorStr;
-      el.style.display = "none";
-      document.body.appendChild(el);
-      const rgb = getComputedStyle(el).color; // "rgb(230, 166, 255)"
-      el.remove();
-      return normalizeColor(rgb);
-    }
-
-    function getEdgeStrokes(svg){
-      // Gephi spesso mette gli archi sotto #edges
+    // ---------- Gephi edges/nodes selection ----------
+    function getEdgeElements(svg){
+      // Gephi: edges in <g id="edges"> ... <path stroke="#xxxxxx" ... />
       const edgesGroup = svg.querySelector("#edges");
       if (edgesGroup) {
         const els = edgesGroup.querySelectorAll("path, line, polyline");
         if (els.length) return Array.from(els);
       }
-      // fallback: qualunque path/line/polyline non dentro #nodes
+      // fallback
       return Array.from(svg.querySelectorAll("path, line, polyline"))
         .filter(el => !el.closest("#nodes"));
     }
@@ -262,44 +249,79 @@
       return Array.from(nodesGroup.children).filter(x => x instanceof SVGElement);
     }
 
-    function edgeStrokeComputedNormalized(edgeEl){
-      // Cruciale: computedStyle è SEMPRE rgb(...) anche se lo stroke viene da CSS interno
-      return normalizeColor(getComputedStyle(edgeEl).stroke);
+    // ---------- Color utils ----------
+    function hexToRgb(hex){
+      const h = hex.replace("#","").trim();
+      const full = h.length === 3 ? h.split("").map(c => c+c).join("") : h;
+      const n = parseInt(full, 16);
+      return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
     }
 
+    function rgbDistance(a, b){
+      // distanza euclidea semplice (sufficiente qui)
+      const dr = a.r - b.r, dg = a.g - b.g, db = a.b - b.b;
+      return Math.sqrt(dr*dr + dg*dg + db*db);
+    }
+
+    function buildEdgePalette(svg){
+      const edges = getEdgeElements(svg);
+      const set = new Set();
+      for (const e of edges) {
+        const s = (e.getAttribute("stroke") || "").trim().toLowerCase();
+        if (s && s !== "none") set.add(s);
+      }
+      EDGE_COLOR_PALETTE = Array.from(set);
+      // console.log("Edge palette:", EDGE_COLOR_PALETTE);
+    }
+
+    function snapToNearestEdgeColor(hex){
+      if (!EDGE_COLOR_PALETTE || EDGE_COLOR_PALETTE.length === 0) return hex.toLowerCase();
+      const target = hexToRgb(hex);
+      let best = EDGE_COLOR_PALETTE[0];
+      let bestD = Infinity;
+      for (const c of EDGE_COLOR_PALETTE) {
+        if (!c.startsWith("#")) continue;
+        const d = rgbDistance(target, hexToRgb(c));
+        if (d < bestD) { bestD = d; best = c; }
+      }
+      return best; // colore reale dello SVG
+    }
+
+    // ---------- Filter: edges only ----------
     function showAll(){
       if (!svgRef) return;
-      getEdgeStrokes(svgRef).forEach(e => e.style.opacity = "");
+      getEdgeElements(svgRef).forEach(e => e.style.opacity = "");
       getNodeGroupChildren(svgRef).forEach(n => n.style.opacity = "");
     }
 
-    function filterEdgesByColor(hexColor){
+    function filterEdgesByColor(requestedHex){
       if (!svgRef) return;
 
-      const target = cssColorToRgbNormalized(hexColor);
-      const edges = getEdgeStrokes(svgRef);
+      const snapped = snapToNearestEdgeColor(requestedHex); // <-- magia: colore reale
+      const edges = getEdgeElements(svgRef);
       const nodes = getNodeGroupChildren(svgRef);
 
       // nodi: discreti
       nodes.forEach(n => n.style.opacity = "0.18");
 
-      // archi: tutti in fade
+      // archi: fade
       edges.forEach(e => e.style.opacity = "0.04");
 
-      // evidenzia SOLO gli archi con stroke del colore target
+      // evidenzia solo archi col colore "snapped"
       let matched = 0;
       edges.forEach(e => {
-        if (edgeStrokeComputedNormalized(e) === target) {
+        const s = (e.getAttribute("stroke") || "").trim().toLowerCase();
+        if (s === snapped) {
           e.style.opacity = "1";
           matched++;
         }
       });
 
-      // Debug utile (puoi rimuoverlo dopo)
-      console.log("[Legend] target:", target, "| matched edges:", matched);
+      // Debug (puoi togliere dopo)
+      console.log("[Legend] requested:", requestedHex, "-> snapped:", snapped, "| matched:", matched);
     }
 
-    // ---------- Legend click (attaccata subito) ----------
+    // ---------- Legend click ----------
     const legendItems = Array.from(document.querySelectorAll(".legend-item"));
     const showAllBtn = document.getElementById("legend-showall");
 
@@ -318,6 +340,7 @@
           showAll();
           return;
         }
+
         setActive(item);
         filterEdgesByColor(color);
       });
@@ -342,7 +365,7 @@
       svg.removeAttribute("height");
       svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
-      // viewport group (pan/zoom)
+      // Pan/zoom group
       let viewportG = svg.querySelector("#viewport");
       if (!viewportG) {
         viewportG = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -350,6 +373,9 @@
         while (svg.firstChild) viewportG.appendChild(svg.firstChild);
         svg.appendChild(viewportG);
       }
+
+      // costruisci palette colori edges (serve per snap)
+      buildEdgePalette(svgRef);
 
       fitToView(svg, viewportG);
 
@@ -419,6 +445,7 @@
         applyTransform(viewportG);
       }, { passive: false });
 
+      // RESET
       resetBtn.addEventListener("click", () => fitToView(svg, viewportG));
     }
 
