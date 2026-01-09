@@ -8,7 +8,6 @@
     :root{
       color-scheme: light dark;
 
-      /* UI palette (forzata chiara e leggibile) */
       --ui-bg: #ffffff;
       --ui-border: #e5e7eb;
       --ui-text: #111827;
@@ -37,7 +36,6 @@
       display: flex;
       gap: 8px;
       align-items: center;
-
       color: var(--ui-text);
     }
 
@@ -45,7 +43,6 @@
     header button{
       border: 1px solid var(--ui-border);
       background: var(--ui-bg);
-
       padding: 6px 10px;
       border-radius: 10px;
 
@@ -82,7 +79,7 @@
 
     .hint{ margin-left: auto; opacity: .75; font-size: 13px; color: var(--ui-text-muted); }
 
-    /* --- LEGENDA (cliccabile: evidenzia SOLO GLI ARCHI del colore scelto) --- */
+    /* --- LEGENDA --- */
     .legend{
       position: fixed;
       right: 1rem;
@@ -100,9 +97,8 @@
       min-width: 210px;
 
       color: var(--ui-text);
+      pointer-events: auto; /* IMPORTANTISSIMO: la legenda riceve click */
     }
-
-    /* forza colore testo su TUTTI gli elementi della legenda */
     .legend, .legend *{ color: var(--ui-text); }
 
     .legend-title{
@@ -174,40 +170,21 @@
 
   <div id="wrap" aria-label="SVG viewer"></div>
 
-  <!-- LEGENDA (cliccabile: evidenzia SOLO GLI ARCHI del colore scelto) -->
   <div class="legend" id="legend">
     <div class="legend-title">
       <span>Legenda</span>
       <small>clicca un ruolo</small>
     </div>
 
-    <div class="legend-item" data-role="compositore" data-color="#e6a6ff">
-      <span class="legend-color" style="background:#e6a6ff"></span><span>compositore</span>
-    </div>
-    <div class="legend-item" data-role="editore" data-color="#7fd300">
-      <span class="legend-color" style="background:#7fd300"></span><span>editore</span>
-    </div>
-    <div class="legend-item" data-role="paroliere" data-color="#00c4ff">
-      <span class="legend-color" style="background:#00c4ff"></span><span>paroliere</span>
-    </div>
-    <div class="legend-item" data-role="esecutore" data-color="#4f4a45">
-      <span class="legend-color" style="background:#4f4a45"></span><span>esecutore</span>
-    </div>
-    <div class="legend-item" data-role="traduttore" data-color="#ff8a00">
-      <span class="legend-color" style="background:#ff8a00"></span><span>traduttore</span>
-    </div>
-    <div class="legend-item" data-role="arrangiatore" data-color="#ff4f87">
-      <span class="legend-color" style="background:#ff4f87"></span><span>arrangiatore</span>
-    </div>
-    <div class="legend-item" data-role="dedicatario" data-color="#00c389">
-      <span class="legend-color" style="background:#00c389"></span><span>dedicatario</span>
-    </div>
-    <div class="legend-item" data-role="direttore_orchestra" data-color="#d7b8b2">
-      <span class="legend-color" style="background:#d7b8b2"></span><span>direttore_orchestra</span>
-    </div>
-    <div class="legend-item" data-role="riduttore" data-color="#c9c9c9">
-      <span class="legend-color" style="background:#c9c9c9"></span><span>riduttore</span>
-    </div>
+    <div class="legend-item" data-color="#e6a6ff"><span class="legend-color" style="background:#e6a6ff"></span><span>compositore</span></div>
+    <div class="legend-item" data-color="#7fd300"><span class="legend-color" style="background:#7fd300"></span><span>editore</span></div>
+    <div class="legend-item" data-color="#00c4ff"><span class="legend-color" style="background:#00c4ff"></span><span>paroliere</span></div>
+    <div class="legend-item" data-color="#4f4a45"><span class="legend-color" style="background:#4f4a45"></span><span>esecutore</span></div>
+    <div class="legend-item" data-color="#ff8a00"><span class="legend-color" style="background:#ff8a00"></span><span>traduttore</span></div>
+    <div class="legend-item" data-color="#ff4f87"><span class="legend-color" style="background:#ff4f87"></span><span>arrangiatore</span></div>
+    <div class="legend-item" data-color="#00c389"><span class="legend-color" style="background:#00c389"></span><span>dedicatario</span></div>
+    <div class="legend-item" data-color="#d7b8b2"><span class="legend-color" style="background:#d7b8b2"></span><span>direttore_orchestra</span></div>
+    <div class="legend-item" data-color="#c9c9c9"><span class="legend-color" style="background:#c9c9c9"></span><span>riduttore</span></div>
 
     <div class="legend-actions">
       <button id="legend-showall" type="button">Mostra tutto</button>
@@ -216,28 +193,25 @@
 
   <script>
     const SVG_FILE = "mattia_test_2.svg";
-
     const wrap = document.getElementById("wrap");
     const resetBtn = document.getElementById("reset");
 
-    // Camera
-    let scale = 1;
-    let panX = 0;
-    let panY = 0;
+    // riferimenti SVG (per la legenda)
+    let svgRef = null;
 
-    // Drag state
-    let isPanning = false;
-    let dragged = false;
+    // Camera
+    let scale = 1, panX = 0, panY = 0;
+
+    // Drag
+    let isPanning = false, dragged = false;
     let lastX = 0, lastY = 0;
     let vx = 0, vy = 0;
     let inertiaRaf = null;
 
     function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-
     function applyTransform(viewportG){
       viewportG.setAttribute("transform", `translate(${panX} ${panY}) scale(${scale})`);
     }
-
     function fitToView(svg, viewportG){
       if (!svg.getAttribute("viewBox")) {
         const bb = viewportG.getBBox();
@@ -251,28 +225,19 @@
       if (inertiaRaf) cancelAnimationFrame(inertiaRaf);
       inertiaRaf = null;
     }
-
     function startInertia(viewportG){
       stopInertia();
       const step = () => {
-        vx *= 0.90;
-        vy *= 0.90;
-
-        panX += vx;
-        panY += vy;
-
+        vx *= 0.90; vy *= 0.90;
+        panX += vx;  panY += vy;
         applyTransform(viewportG);
-
-        if (Math.abs(vx) + Math.abs(vy) > 0.25) {
-          inertiaRaf = requestAnimationFrame(step);
-        } else {
-          stopInertia();
-        }
+        if (Math.abs(vx) + Math.abs(vy) > 0.25) inertiaRaf = requestAnimationFrame(step);
+        else stopInertia();
       };
       inertiaRaf = requestAnimationFrame(step);
     }
 
-    // ---- Filtro archi per colore (Gephi-friendly) ----
+    // ---- Filtro archi per colore (robusto per SVG Gephi) ----
     function hexToRgbString(hex){
       const h = hex.replace("#","").trim();
       const full = h.length === 3 ? h.split("").map(c => c+c).join("") : h;
@@ -282,7 +247,6 @@
       const b = n & 255;
       return `rgb(${r}, ${g}, ${b})`;
     }
-
     function normalizeRgb(str){
       const s = String(str || "").trim().toLowerCase();
       const m = s.match(/rgb\s*\(\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*\)/i);
@@ -290,52 +254,102 @@
       return s;
     }
 
-    function edgeStrokeColor(edgeG){
-      const path = edgeG.querySelector("path, line, polyline");
-      if (!path) return "";
+    function getEdgeElements(svg){
+      // 1) struttura tipica Gephi: #edges contiene path/line
+      const grp = svg.querySelector("#edges");
+      if (grp) {
+        const els = grp.querySelectorAll("path, line, polyline");
+        if (els.length) return Array.from(els);
+      }
+      // 2) alternative: elementi con class "edge"
+      const byClass = svg.querySelectorAll("path.edge, line.edge, polyline.edge, g.edge path, g.edge line, g.edge polyline");
+      if (byClass.length) return Array.from(byClass);
+      // 3) fallback: tutto ciò che ha stroke e NON è dentro #nodes
+      const all = Array.from(svg.querySelectorAll("path, line, polyline"));
+      return all.filter(el => !el.closest("#nodes"));
+    }
 
-      const attr = path.getAttribute("stroke");
+    function getNodeGroups(svg){
+      // per “sfumare” i nodi (non filtrarli): #nodes oppure g.node
+      const grp = svg.querySelector("#nodes");
+      if (grp) return Array.from(grp.children).filter(x => x instanceof SVGElement);
+      const gnodes = svg.querySelectorAll("g.node");
+      return gnodes.length ? Array.from(gnodes) : [];
+    }
+
+    function edgeStrokeColor(el){
+      const attr = el.getAttribute("stroke");
       if (attr && attr !== "none") return normalizeRgb(attr);
-
-      const cs = getComputedStyle(path).stroke;
-      return normalizeRgb(cs);
+      return normalizeRgb(getComputedStyle(el).stroke);
     }
 
-    function showAll(svg){
-      svg.querySelectorAll("g.edge, g.node").forEach(g => g.style.opacity = "");
+    function showAll(){
+      if (!svgRef) return;
+      // reset opacità su edges e nodes (qualunque struttura)
+      getEdgeElements(svgRef).forEach(e => e.style.opacity = "");
+      getNodeGroups(svgRef).forEach(n => n.style.opacity = "");
     }
 
-    function filterEdgesByColor(svg, hexColor){
+    function filterEdgesByColor(hexColor){
+      if (!svgRef) return;
       const target = normalizeRgb(hexToRgbString(hexColor));
 
-      const edges = Array.from(svg.querySelectorAll("g.edge"));
-      const nodes = Array.from(svg.querySelectorAll("g.node"));
+      const edges = getEdgeElements(svgRef);
+      const nodes = getNodeGroups(svgRef);
 
-      // nodi sempre visibili ma discreti
+      // nodi: visibili ma discreti
       nodes.forEach(n => n.style.opacity = "0.18");
 
-      // archi in fade, poi evidenzia solo quelli target
+      // archi: fade + highlight target
       edges.forEach(e => e.style.opacity = "0.04");
-
-      for (const e of edges) {
+      edges.forEach(e => {
         if (edgeStrokeColor(e) === target) e.style.opacity = "1";
-      }
+      });
     }
 
+    // ---- Legenda click (attaccata SUBITO, non dipende dal loadSvg) ----
+    const legendItems = Array.from(document.querySelectorAll(".legend-item"));
+    const showAllBtn = document.getElementById("legend-showall");
+
+    function setActive(item){
+      legendItems.forEach(x => x.classList.remove("active"));
+      if (item) item.classList.add("active");
+    }
+
+    legendItems.forEach(item => {
+      item.addEventListener("click", () => {
+        const color = item.getAttribute("data-color");
+        const isActive = item.classList.contains("active");
+
+        if (isActive) {
+          setActive(null);
+          showAll();
+          return;
+        }
+        setActive(item);
+        filterEdgesByColor(color);
+      });
+    });
+
+    showAllBtn.addEventListener("click", () => {
+      setActive(null);
+      showAll();
+    });
+
+    // ---- Caricamento SVG + pan/zoom ----
     async function loadSvg(){
       const res = await fetch(SVG_FILE, { cache: "no-store" });
       const text = await res.text();
-
       wrap.innerHTML = text;
 
       const svg = wrap.querySelector("svg");
       if (!svg) throw new Error("SVG non trovato nel file.");
+      svgRef = svg;
 
       svg.removeAttribute("width");
       svg.removeAttribute("height");
       svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
-      // Viewport group
       let viewportG = svg.querySelector("#viewport");
       if (!viewportG) {
         viewportG = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -346,18 +360,14 @@
 
       fitToView(svg, viewportG);
 
-      // ---------- PAN (smooth) ----------
+      // PAN
       wrap.addEventListener("pointerdown", (e) => {
         if (e.button !== 0) return;
-
         isPanning = true;
         dragged = false;
-
         stopInertia();
         wrap.setPointerCapture(e.pointerId);
-
-        lastX = e.clientX;
-        lastY = e.clientY;
+        lastX = e.clientX; lastY = e.clientY;
         vx = 0; vy = 0;
       });
 
@@ -369,22 +379,17 @@
 
         if (!dragged && Math.hypot(dx, dy) > 2) dragged = true;
 
-        panX += dx;
-        panY += dy;
-
+        panX += dx; panY += dy;
         vx = vx * 0.6 + dx * 0.4;
         vy = vy * 0.6 + dy * 0.4;
 
-        lastX = e.clientX;
-        lastY = e.clientY;
-
+        lastX = e.clientX; lastY = e.clientY;
         applyTransform(viewportG);
       });
 
       wrap.addEventListener("pointerup", () => {
         if (!isPanning) return;
         isPanning = false;
-
         if (dragged) startInertia(viewportG);
       });
 
@@ -393,7 +398,6 @@
         stopInertia();
       });
 
-      // blocca click fantasma dopo drag
       wrap.addEventListener("click", (e) => {
         if (dragged) {
           e.preventDefault();
@@ -402,7 +406,7 @@
         }
       }, true);
 
-      // ---------- ZOOM ----------
+      // ZOOM
       wrap.addEventListener("wheel", (e) => {
         e.preventDefault();
 
@@ -424,39 +428,8 @@
         applyTransform(viewportG);
       }, { passive: false });
 
-      // Reset
+      // RESET
       resetBtn.addEventListener("click", () => fitToView(svg, viewportG));
-
-      // ---------- LEGENDA CLICK (FILTER EDGES ONLY) ----------
-      const legendItems = Array.from(document.querySelectorAll(".legend-item"));
-      const showAllBtn = document.getElementById("legend-showall");
-
-      function setActive(item){
-        legendItems.forEach(x => x.classList.remove("active"));
-        if (item) item.classList.add("active");
-      }
-
-      legendItems.forEach(item => {
-        item.addEventListener("click", () => {
-          const color = item.getAttribute("data-color");
-
-          // toggle: stesso ruolo -> mostra tutto
-          const isActive = item.classList.contains("active");
-          if (isActive) {
-            setActive(null);
-            showAll(svg);
-            return;
-          }
-
-          setActive(item);
-          filterEdgesByColor(svg, color);
-        });
-      });
-
-      showAllBtn.addEventListener("click", () => {
-        setActive(null);
-        showAll(svg);
-      });
     }
 
     loadSvg().catch(err => {
