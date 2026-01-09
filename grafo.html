@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rete relazionale MAPSEM</title>
+  <title>Rete relazionale - MAPSEM</title>
   <style>
     :root { color-scheme: light dark; }
     body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    header {
+
+    header{
       position: sticky; top: 0; z-index: 10;
       backdrop-filter: blur(8px);
       background: color-mix(in srgb, Canvas 85%, transparent);
@@ -15,137 +16,208 @@
       padding: 10px 12px;
       display: flex; gap: 8px; align-items: center;
     }
-    header a, header button {
+    header a, header button{
       border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
       background: color-mix(in srgb, Canvas 92%, transparent);
       padding: 6px 10px; border-radius: 10px;
       color: inherit; text-decoration: none; cursor: pointer;
       font-size: 14px;
     }
-    #wrap {
+
+    #wrap{
       height: calc(100vh - 54px);
       width: 100%;
       overflow: hidden;
-      touch-action: none; /* importante per pan su touch */
-      background: #ffffff; /* SFONDO BIANCO */
+      touch-action: none;
+      background: #ffffff;
+
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: grab;
     }
-    #wrap svg {
+    #wrap:active{ cursor: grabbing; }
+
+    #wrap svg{
       width: 100%;
       height: 100%;
       display: block;
-      background: #ffffff; /* assicura bianco anche dentro lo svg */
+      background: #ffffff;
     }
-    .hint { margin-left: auto; opacity: .75; font-size: 13px; }
+
+    .hint{ margin-left: auto; opacity: .75; font-size: 13px; }
   </style>
 </head>
+
 <body>
   <header>
     <a href="index.html">← Indice</a>
     <button id="reset">Reset</button>
-    <span class="hint">Drag = sposta · Rotella/trackpad = zoom</span>
+    <span class="hint">Drag = sposta · Rotella/trackpad = zoom (Shift = turbo)</span>
   </header>
 
   <div id="wrap" aria-label="SVG viewer"></div>
 
   <script>
-    // 1) Cambia qui il nome del tuo file SVG:
     const SVG_FILE = "MO_RELAZIONI_1_responsive.svg";
 
     const wrap = document.getElementById("wrap");
     const resetBtn = document.getElementById("reset");
 
-    // Stato camera (pan/zoom)
+    // Camera
     let scale = 1;
     let panX = 0;
     let panY = 0;
 
+    // Drag state
     let isPanning = false;
-    let startX = 0;
-    let startY = 0;
+    let dragged = false;
+    let lastX = 0, lastY = 0;
+    let vx = 0, vy = 0;
+    let inertiaRaf = null;
 
     function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
     function applyTransform(viewportG){
+      // translate THEN scale è ok: pan in "screen pixels", molto naturale
       viewportG.setAttribute("transform", `translate(${panX} ${panY}) scale(${scale})`);
     }
 
     function fitToView(svg, viewportG){
-      // prova a "fit" basandosi sul viewBox esistente; se manca, lo creiamo con getBBox
       if (!svg.getAttribute("viewBox")) {
         const bb = viewportG.getBBox();
         svg.setAttribute("viewBox", `${bb.x} ${bb.y} ${bb.width} ${bb.height}`);
       }
-      scale = 1;
-      panX = 0;
-      panY = 0;
+      scale = 1; panX = 0; panY = 0;
       applyTransform(viewportG);
+    }
+
+    function stopInertia(){
+      if (inertiaRaf) cancelAnimationFrame(inertiaRaf);
+      inertiaRaf = null;
+    }
+
+    function startInertia(viewportG){
+      stopInertia();
+      const step = () => {
+        // attrito: più alto = più smooth e si ferma prima
+        vx *= 0.90;
+        vy *= 0.90;
+
+        panX += vx;
+        panY += vy;
+
+        applyTransform(viewportG);
+
+        if (Math.abs(vx) + Math.abs(vy) > 0.25) {
+          inertiaRaf = requestAnimationFrame(step);
+        } else {
+          stopInertia();
+        }
+      };
+      inertiaRaf = requestAnimationFrame(step);
     }
 
     async function loadSvg(){
       const res = await fetch(SVG_FILE, { cache: "no-store" });
       const text = await res.text();
 
-      // Inseriamo lo SVG inline nel DOM
       wrap.innerHTML = text;
 
       const svg = wrap.querySelector("svg");
       if (!svg) throw new Error("SVG non trovato nel file.");
 
-      // Responsive: assicura che non abbia width/height “rigidi”
       svg.removeAttribute("width");
       svg.removeAttribute("height");
       svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
-      // Creiamo un <g id="viewport"> che conterrà TUTTO e che verrà trasformato
-      // Se già esiste (alcuni export lo fanno), lo riusiamo.
+      // Viewport group
       let viewportG = svg.querySelector("#viewport");
       if (!viewportG) {
         viewportG = document.createElementNS("http://www.w3.org/2000/svg", "g");
         viewportG.setAttribute("id", "viewport");
-
-        // sposta tutti i figli attuali dentro viewportG
         while (svg.firstChild) viewportG.appendChild(svg.firstChild);
         svg.appendChild(viewportG);
       }
 
-      // Fit iniziale
       fitToView(svg, viewportG);
 
-      // Gestione PAN (drag)
+      // ---------- PAN (smooth) ----------
       wrap.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+
         isPanning = true;
+        dragged = false;
+
+        stopInertia();
         wrap.setPointerCapture(e.pointerId);
-        startX = e.clientX - panX;
-        startY = e.clientY - panY;
+
+        lastX = e.clientX;
+        lastY = e.clientY;
+        vx = 0; vy = 0;
       });
 
       wrap.addEventListener("pointermove", (e) => {
         if (!isPanning) return;
-        panX = e.clientX - startX;
-        panY = e.clientY - startY;
+
+        const dx = e.clientX - lastX;
+        const dy = e.clientY - lastY;
+
+        // soglia per evitare click involontari
+        if (!dragged && Math.hypot(dx, dy) > 2) dragged = true;
+
+        // aggiornamento pan (molto diretto e fluido)
+        panX += dx;
+        panY += dy;
+
+        // velocità per inerzia (smoothed)
+        // media mobile semplice per evitare "saltelli"
+        vx = vx * 0.6 + dx * 0.4;
+        vy = vy * 0.6 + dy * 0.4;
+
+        lastX = e.clientX;
+        lastY = e.clientY;
+
         applyTransform(viewportG);
       });
 
-      wrap.addEventListener("pointerup", () => { isPanning = false; });
-      wrap.addEventListener("pointercancel", () => { isPanning = false; });
+      wrap.addEventListener("pointerup", () => {
+        if (!isPanning) return;
+        isPanning = false;
 
-      // Gestione ZOOM (wheel)
+        if (dragged) startInertia(viewportG);
+      });
+
+      wrap.addEventListener("pointercancel", () => {
+        isPanning = false;
+        stopInertia();
+      });
+
+      // blocca click "fantasma" dopo drag
+      wrap.addEventListener("click", (e) => {
+        if (dragged) {
+          e.preventDefault();
+          e.stopPropagation();
+          dragged = false;
+        }
+      }, true);
+
+      // ---------- ZOOM ----------
       wrap.addEventListener("wheel", (e) => {
         e.preventDefault();
 
-        // zoom verso il punto del cursore
         const rect = wrap.getBoundingClientRect();
         const cx = e.clientX - rect.left;
         const cy = e.clientY - rect.top;
 
         const prevScale = scale;
         const delta = -e.deltaY;
-        const base = e.shiftKey ? 1.18 : 1.06; // Shift = turbo
-        const zoomFactor = delta > 0 ? base : 1/base;
+
+        const base = e.shiftKey ? 1.18 : 1.06;
+        const zoomFactor = delta > 0 ? base : 1 / base;
 
         scale = clamp(scale * zoomFactor, 0.05, 60);
 
-        // compensazione pan per zoom centrato sul cursore
+        // zoom centrato sul cursore
         panX = cx - (cx - panX) * (scale / prevScale);
         panY = cy - (cy - panY) * (scale / prevScale);
 
