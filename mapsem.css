@@ -1,0 +1,103 @@
+:root {
+  --ms-bg: #10110f;
+  --ms-paper: #f0e6ce;
+  --ms-orange: #ff633c;
+  --ms-muted: #c1bbaa;
+  --ms-border: #5b5b50;
+  --ms-panel: #191a17;
+  color-scheme: dark;
+}
+.ms-page { margin: 0; background: var(--ms-bg); color: var(--ms-paper); font-family: Arial, Helvetica, sans-serif; line-height: 1.55; }
+.ms-page *, .ms-page *::before, .ms-page *::after { box-sizing: border-box; }
+.ms-page a { color: inherit; }
+.ms-page a:hover { color: var(--ms-orange); }
+.ms-page :focus-visible { outline: 2px solid var(--ms-orange); outline-offset: 3px; }
+.ms-nav { display: flex; justify-content: space-between; align-items: center; gap: 8px 24px; flex-wrap: wrap; padding: 15px clamp(16px,5vw,72px); border-bottom: 1px solid var(--ms-border); }
+.ms-nav > div, .ms-footer > div, .ms-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; }
+.ms-nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: .86rem; text-decoration: none; }
+.ms-nav a[aria-current] { color: var(--ms-orange); text-decoration: underline; text-underline-offset: .4em; }
+.ms-nav .ms-brand { font-weight: bold; letter-spacing: .07em; gap: 8px; }
+.ms-brand span, .ms-kicker { color: var(--ms-orange); font-size: .75rem; letter-spacing: .12em; }
+.ms-shell { max-width: 1440px; padding: 0 clamp(16px,5vw,72px) 40px; margin: auto; }
+.ms-hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); align-items: center; gap: clamp(20px, 6vw, 90px); padding: clamp(36px,8vw,108px) 0; border-bottom: 1px solid var(--ms-border); }
+.ms-hero h1 { font-size: clamp(65px, 13vw, 178px); line-height: .88; letter-spacing: -.075em; margin: 18px 0 28px; }
+.ms-hero h1 span { color: var(--ms-orange); }
+.ms-lead { font-size: clamp(20px,3vw,34px); line-height: 1.2; }
+.ms-hero p, .ms-heading p { max-width: 62ch; }
+.ms-index-art { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; border: 1px solid var(--ms-border); background: var(--ms-border); transform: rotate(-4deg); }
+.ms-index-art span { display: grid; place-items: center; padding: 14px 6px; min-height: 110px; background: var(--ms-panel); font-size: clamp(9px, 1.1vw, 15px); letter-spacing: .1em; }
+.ms-index-art span:nth-child(2), .ms-index-art span:nth-child(3) { background: var(--ms-orange); color: var(--ms-bg); }
+.ms-cards { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.ms-card { display: block; padding: clamp(18px,3vw,34px); border: 1px solid var(--ms-border); text-decoration: none; }
+.ms-card:hover { border-color: var(--ms-orange); }
+.ms-card h3 { margin: 12px 0; font-size: clamp(21px,3vw,32px); line-height: 1.2; }
+.ms-card p, .ms-footer { color: var(--ms-muted); }
+.ms-footer { border-top: 1px solid var(--ms-border); margin-top: 44px; padding-top: 12px; }
+.ms-heading { padding: 26px 0 18px; }
+.ms-heading h1 { font-size: clamp(32px,6vw,68px); line-height: 1.05; margin: 8px 0 12px; }
+.ms-button, .ms-tools button, .ms-tools select, .ms-tools input, .ms-result button {
+  font: inherit;
+  min-height: 44px;
+  max-width: 100%;
+  border: 1px solid var(--ms-border);
+  border-radius: 0;
+  padding: 8px 12px;
+  background: var(--ms-panel);
+  color: var(--ms-paper);
+}
+.ms-button, .ms-tools button, .ms-result button { cursor: pointer; }
+.ms-page .ms-button { display: inline-flex; align-items: center; text-decoration: none; background: var(--ms-orange); color: var(--ms-bg); }
+.ms-tools input[type="search"] { width: min(100%, 32rem); }
+.ms-tools label { display: grid; gap: 4px; max-width: 100%; }
+.ms-tools [hidden], #editor-map[hidden] { display: none; }
+.ms-tools button[aria-pressed="true"] { background: var(--ms-orange); color: var(--ms-bg); }
+#editor-map { height: clamp(285px,55svh,570px); background: #1c2125; margin-top: 15px; }
+#editor-map .leaflet-control-zoom a, #editor-map .leaflet-popup-close-button { width: 44px; height: 44px; line-height: 44px; }
+#editor-map .leaflet-popup-content { overflow-wrap: anywhere; padding-right: 12px; }
+#editor-map .leaflet-popup-content-wrapper, #editor-map .leaflet-popup-tip { background: var(--ms-paper); color: var(--ms-bg); }
+#editor-map .leaflet-container a, #editor-map .leaflet-control a { color: #252521; }
+.ms-results { list-style: none; margin: 0; padding: 0; }
+.ms-result { border-top: 1px solid var(--ms-border); padding: 14px 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 4px 15px; overflow-wrap: anywhere; }
+.ms-result small { display: block; color: var(--ms-muted); }
+.ms-result[hidden], .ms-tools button[hidden] { display: none; }
+.ms-chart-scroll { min-width: 0; overflow-x: auto; }
+.ms-sankey { --bg: var(--ms-bg); --panel: var(--ms-panel); --card: var(--ms-panel); --ink: var(--ms-paper); --muted: var(--ms-muted); --accent: var(--ms-orange); --border: var(--ms-border); }
+.ms-sankey .title { background: none; color: var(--ms-paper); }
+.ms-sankey .grid { grid-template-columns: minmax(220px,340px) minmax(0,1fr); }
+.ms-sankey .card { border-radius: 0; box-shadow: none; min-width: 0; }
+.ms-sankey .btn { min-height: 44px; background: var(--ms-bg); }
+.ms-sankey .btn-primary { background: var(--ms-orange); color: var(--ms-bg); }
+.ms-sankey .section-title, .ms-sankey .badge { color: var(--ms-paper); }
+.ms-sankey #range { margin-inline: 16px; }
+.ms-sankey #range .noUi-connect { background: var(--ms-orange); }
+.ms-film #visualization { height: 470px; margin: 18px 0; background: var(--ms-paper); color-scheme: light; }
+.ms-film .vis-item { color: #151512; }
+.ms-film .ms-result { grid-template-columns: 5ch minmax(0,1fr); align-items: baseline; }
+.ms-graph { --ui-bg: var(--ms-bg); --ui-text: var(--ms-paper); --ui-border: var(--ms-border); --ui-text-muted: var(--ms-muted); --ui-hover: #282922; --ui-active: #35352b; }
+.ms-graph header { position: static; flex-wrap: wrap; }
+.ms-graph header button, .ms-graph .legend button { min-height: 44px; }
+.ms-graph #wrap { height: clamp(310px,65svh,780px); border-block: 1px solid var(--ms-border); }
+.ms-graph .legend { position: static; margin: 16px; box-shadow: none; }
+.ms-graph .legend-item { display: inline-flex; min-height: 44px; }
+@media (max-width: 700px) {
+  .ms-nav { gap: 0; padding-block: 8px; }
+  .ms-nav > div { gap: 0 12px; }
+  .ms-hero { grid-template-columns: 1fr; }
+  .ms-hero h1 { font-size: clamp(62px,20vw,115px); }
+  .ms-index-art { transform: none; }
+  .ms-index-art span { min-height: 54px; }
+  .ms-cards, .ms-sankey .grid { grid-template-columns: 1fr; }
+  .ms-sankey .container { padding: 16px; }
+  .ms-sankey .sticky { position: static; }
+  .ms-sankey #sankey { min-width: 680px; }
+  .ms-film #visualization { height: 330px; }
+  .ms-result { grid-template-columns: minmax(0,1fr); }
+  .ms-result button { justify-self: start; }
+}
+
+.ms-editor-dot { display: grid; place-items: center; }
+.ms-editor-dot::after { content: ''; width: 13px; height: 13px; border: 2px solid #21140d; border-radius: 50%; background: var(--ms-orange); }
+
+.ms-film #visualization[hidden], .ms-film #film-fit[hidden] { display: none; }
+.ms-graph button.legend-item { background: var(--ui-bg); font: inherit; }
+.ms-graph button.legend-item.active { background: var(--ui-active); }

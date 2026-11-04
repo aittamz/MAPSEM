@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rete Relazionakle – MAPSEM</title>
+  <title>Rete dei ruoli · MAPSEM</title>
   <style>
     :root{
       color-scheme: light dark;
@@ -149,13 +149,20 @@
     }
     .legend-actions button:hover{ background: var(--ui-hover); }
   </style>
+  <link rel="stylesheet" href="mapsem.css">
 </head>
 
-<body>
+<body class="ms-page ms-graph">
+<nav class="ms-nav" aria-label="Navigazione MAPSEM">
+  <a class="ms-brand" href="index.html">MAPSEM <span> / ATLANTE DI RICERCA</span></a>
+  <div><a href="index.html">Indice</a><a href="MAPSEM_GENERI_NORMALIZED.html">Generi e ritmi</a><a href="editors_map_geocoded_OOK.html">Editori</a><a href="timeline_film_FINALE_Ufficiale.html">Cinema</a><a href="grafo.html" aria-current="page">Rete dei ruoli</a></div>
+</nav>
+  <div class="ms-shell ms-heading"><p class="ms-kicker">04 / RELAZIONI</p><h1>Rete dei ruoli</h1><p>Ingrandisci la rete e spostati nel grafo. Seleziona un ruolo nella legenda per evidenziarlo.</p></div>
   <header>
-    <a href="index.html">← Indice</a>
-    <button id="reset">Reset</button>
-    <span class="hint">Drag = sposta · Rotella/trackpad = zoom (Shift = turbo)</span>
+    <button type="button" id="reset">Inquadra il grafo</button>
+    <button type="button" id="graph-plus" aria-label="Ingrandisci il grafo">+</button>
+    <button type="button" id="graph-minus" aria-label="Riduci il grafo">−</button>
+    <span class="hint">Trascina per spostarti · Usa + e − per lo zoom</span>
   </header>
 
   <div id="wrap" aria-label="SVG viewer"></div>
@@ -167,15 +174,15 @@
       <small>clicca un ruolo</small>
     </div>
 
-    <div class="legend-item" data-color="#e6a6ff"><span class="legend-color" style="background:#e6a6ff"></span><span>compositore</span></div>
-    <div class="legend-item" data-color="#7fd300"><span class="legend-color" style="background:#7fd300"></span><span>editore</span></div>
-    <div class="legend-item" data-color="#00c4ff"><span class="legend-color" style="background:#00c4ff"></span><span>paroliere</span></div>
-    <div class="legend-item" data-color="#4f4a45"><span class="legend-color" style="background:#4f4a45"></span><span>esecutore</span></div>
-    <div class="legend-item" data-color="#ff8a00"><span class="legend-color" style="background:#ff8a00"></span><span>traduttore</span></div>
-    <div class="legend-item" data-color="#ff4f87"><span class="legend-color" style="background:#ff4f87"></span><span>arrangiatore</span></div>
-    <div class="legend-item" data-color="#00c389"><span class="legend-color" style="background:#00c389"></span><span>dedicatario</span></div>
-    <div class="legend-item" data-color="#d7b8b2"><span class="legend-color" style="background:#d7b8b2"></span><span>direttore_orchestra</span></div>
-    <div class="legend-item" data-color="#c9c9c9"><span class="legend-color" style="background:#c9c9c9"></span><span>riduttore</span></div>
+    <button type="button" class="legend-item" data-color="#e6a6ff"><span class="legend-color" style="background:#e6a6ff"></span><span>compositore</span></button>
+    <button type="button" class="legend-item" data-color="#7fd300"><span class="legend-color" style="background:#7fd300"></span><span>editore</span></button>
+    <button type="button" class="legend-item" data-color="#00c4ff"><span class="legend-color" style="background:#00c4ff"></span><span>paroliere</span></button>
+    <button type="button" class="legend-item" data-color="#4f4a45"><span class="legend-color" style="background:#4f4a45"></span><span>esecutore</span></button>
+    <button type="button" class="legend-item" data-color="#ff8a00"><span class="legend-color" style="background:#ff8a00"></span><span>traduttore</span></button>
+    <button type="button" class="legend-item" data-color="#ff4f87"><span class="legend-color" style="background:#ff4f87"></span><span>arrangiatore</span></button>
+    <button type="button" class="legend-item" data-color="#00c389"><span class="legend-color" style="background:#00c389"></span><span>dedicatario</span></button>
+    <button type="button" class="legend-item" data-color="#d7b8b2"><span class="legend-color" style="background:#d7b8b2"></span><span>direttore_orchestra</span></button>
+    <button type="button" class="legend-item" data-color="#c9c9c9"><span class="legend-color" style="background:#c9c9c9"></span><span>riduttore</span></button>
 
     <div class="legend-actions">
       <button id="legend-showall" type="button">Mostra tutto</button>
@@ -447,6 +454,18 @@
 
       // RESET
       resetBtn.addEventListener("click", () => fitToView(svg, viewportG));
+      function zoomBy(factor) {
+        const { x, y, width, height } = svg.viewBox.baseVal;
+        const centerX = x + width / 2;
+        const centerY = y + height / 2;
+        const nextScale = clamp(scale * factor, 0.05, 60);
+        panX = centerX - (centerX - panX) * nextScale / scale;
+        panY = centerY - (centerY - panY) * nextScale / scale;
+        scale = nextScale;
+        applyTransform(viewportG);
+      }
+      document.getElementById("graph-plus").addEventListener("click", () => zoomBy(1.35));
+      document.getElementById("graph-minus").addEventListener("click", () => zoomBy(1 / 1.35));
     }
 
     loadSvg().catch(err => {
