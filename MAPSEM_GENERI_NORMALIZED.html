@@ -56,6 +56,7 @@ input.year-input { width: 110px; padding:6px 10px; border-radius:10px; border:1p
 .decade-buttons .btn { padding:6px 10px; font-size: 12px; }
 </style>
 <link rel="stylesheet" href="mapsem.css">
+<script src="lingua.js"></script>
 </head>
 <body class="ms-page ms-sankey">
 <nav class="ms-nav" aria-label="Navigazione MAPSEM">
@@ -269,8 +270,8 @@ function draw() {
 
   const customdata = agg.custom.map(o => [o.p]);
   const hover = "%{source.label} → %{target.label}<br>" +
-                "Conteggio: %{value}<br>" +
-                "Quota dal nodo sorgente: %{customdata[0]:.1f}%<extra></extra>";
+                (document.documentElement.lang === "en" ? "Count: %{value}<br>" : "Conteggio: %{value}<br>") +
+                (document.documentElement.lang === "en" ? "Share from source node: %{customdata[0]:.1f}%<extra></extra>" : "Quota dal nodo sorgente: %{customdata[0]:.1f}%<extra></extra>");
 
   const data = [{
     type: "sankey",
@@ -296,7 +297,7 @@ function draw() {
   }];
 
   const layout = {
-    title: { text: F.useYear ? `Intervallo anni: ${Math.round(F.y0)}–${Math.round(F.y1)}` : "Intervallo anni: (nessun filtro)", x: 0, xanchor: "left", font: { size: 16, color: "#e5e7eb" } },
+    title: { text: F.useYear ? `${document.documentElement.lang === "en" ? "Year range" : "Intervallo anni"}: ${Math.round(F.y0)}–${Math.round(F.y1)}` : (document.documentElement.lang === "en" ? "Year range: (no filter)" : "Intervallo anni: (nessun filtro)"), x: 0, xanchor: "left", font: { size: 16, color: "#e5e7eb" } },
     font: { size: 12, color: "#e5e7eb" },
     margin: { l:10, r:10, t:40, b:10 },
     paper_bgcolor: "rgba(0,0,0,0)",

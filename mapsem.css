@@ -101,3 +101,6 @@
 .ms-film #visualization[hidden], .ms-film #film-fit[hidden] { display: none; }
 .ms-graph button.legend-item { background: var(--ui-bg); font: inherit; }
 .ms-graph button.legend-item.active { background: var(--ui-active); }
+/* Lingua condivisa con il sito personale. */
+.ms-nav .ms-lang{display:flex;gap:4px;flex-shrink:0}.ms-lang button{background:transparent;color:var(--muted,#aaa99f);border:1px solid transparent;font:inherit;min-height:44px;min-width:36px;cursor:pointer}.ms-lang button[aria-pressed=true]{color:var(--orange,#ff491b);border-color:currentColor}.ms-lang button:focus-visible{outline:2px solid var(--orange,#ff491b);outline-offset:3px}
+@media(max-width:640px){.ms-nav .ms-lang{position:absolute;right:16px;top:10px}.ms-nav{position:relative}.ms-brand{padding-right:90px}}
